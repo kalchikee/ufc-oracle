@@ -13,11 +13,12 @@ import 'dotenv/config';
 import { logger } from './logger.js';
 import { initDb, upsertFighter, upsertPrediction, getLatestPredictions, getYTDAccuracy, getPredictionsByEvent, logEventAccuracy, persistDb } from './db/database.js';
 import { getNextUFCEvent, isFightWeek, fetchFightCard, fetchEventResults } from './scraper/fightCardFetcher.js';
+import { enrichWithOdds } from './scraper/oddsScraper.js';
 import { scrapeAllFighters } from './scraper/ufcStatsScraper.js';
 import { generatePredictions } from './pipeline/predictionRunner.js';
 import { sendFightCardPredictions, sendPostEventRecap, type RecapResult } from './discord/discord.js';
 import { applyEloUpdate } from './elo/eloSystem.js';
-import type { FightMethod } from './types.js';
+import type { FightMethod, Prediction } from './types.js';
 
 const args = process.argv.slice(2);
 
@@ -68,6 +69,9 @@ async function buildAndSavePredictions(): Promise<{ predictions: Prediction[]; e
   }
 
   logger.info({ event: card.eventName, fights: card.fights.length }, 'Fight card fetched');
+
+  // Enrich bouts with live moneylines (no-op if ODDS_API_KEY not set)
+  await enrichWithOdds(card.fights);
 
   const predictions = await generatePredictions(card);
   if (predictions.length === 0) {

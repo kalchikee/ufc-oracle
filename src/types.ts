@@ -172,6 +172,11 @@ export interface FeatureVector {
 
   // Quality of competition
   prior_opponent_quality_diff: number;
+
+  // Trajectory (recent vs career trend — positive = improving)
+  sig_strikes_trend_a: number;    // fighter A: recent SLpM – career SLpM
+  sig_strikes_trend_b: number;    // fighter B: recent SLpM – career SLpM
+  win_trend_diff: number;         // (recentWin% – careerWin%)_A – (recentWin% – careerWin%)_B
 }
 
 // ─── Model outputs ────────────────────────────────────────────────────────────

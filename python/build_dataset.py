@@ -291,6 +291,14 @@ def compute_features(winner_stats: dict, loser_stats: dict, fight: dict) -> dict
         'elevation_flag': 0,
         'prior_opponent_quality_diff': 0,
 
+        # Trajectory: recent vs career trend (positive = improving)
+        'sig_strikes_trend_a': w.get('recent_slpm', w['slpm']) - w['slpm'],
+        'sig_strikes_trend_b': l.get('recent_slpm', l['slpm']) - l['slpm'],
+        'win_trend_diff': (
+            (w.get('recent_win_pct', w['win_pct']) - w['win_pct']) -
+            (l.get('recent_win_pct', l['win_pct']) - l['win_pct'])
+        ),
+
         # Meta
         'method': fight['method'],
         'fight_id': fight['fight_id'],

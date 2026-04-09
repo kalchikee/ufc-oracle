@@ -125,10 +125,10 @@ export function buildFeatureVector(
 
   const recentWinPctA = (fighterA.recentWins + fighterA.recentLosses) > 0
     ? fighterA.recentWins / (fighterA.recentWins + fighterA.recentLosses)
-    : 0.5;
+    : fighterA.winPct;
   const recentWinPctB = (fighterB.recentWins + fighterB.recentLosses) > 0
     ? fighterB.recentWins / (fighterB.recentWins + fighterB.recentLosses)
-    : 0.5;
+    : fighterB.winPct;
 
   return {
     // Elo
@@ -199,6 +199,11 @@ export function buildFeatureVector(
 
     // Quality of competition
     prior_opponent_quality_diff: oppQualA - oppQualB,
+
+    // Trajectory — recent vs career trend (positive = improving)
+    sig_strikes_trend_a: fighterA.recentSigStrikesPM - fighterA.sigStrikesLandedPM,
+    sig_strikes_trend_b: fighterB.recentSigStrikesPM - fighterB.sigStrikesLandedPM,
+    win_trend_diff: (recentWinPctA - fighterA.winPct) - (recentWinPctB - fighterB.winPct),
   };
 }
 
@@ -244,6 +249,9 @@ const FEATURE_STATS: Record<string, { mean: number; std: number }> = {
   camp_quality_diff: { mean: 0, std: 1.5 },
   elevation_flag: { mean: 0.05, std: 0.22 },
   prior_opponent_quality_diff: { mean: 0, std: 0.2 },
+  sig_strikes_trend_a: { mean: 0, std: 1.2 },
+  sig_strikes_trend_b: { mean: 0, std: 1.2 },
+  win_trend_diff: { mean: 0, std: 0.25 },
 };
 
 export function normalizeFeatures(fv: FeatureVector): Record<string, number> {

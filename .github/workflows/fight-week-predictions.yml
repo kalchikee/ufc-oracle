@@ -56,6 +56,7 @@ jobs:
       - name: Generate and save predictions (no Discord)
         run: npm run pipeline:save
         env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           LOG_LEVEL: info
           LOG_FORMAT: json
 
