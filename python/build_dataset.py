@@ -437,33 +437,23 @@ def _warm_elo_state(df: pd.DataFrame) -> None:
         pass
     log.info(f'Elo warm-start complete (approximated from {len(winner_rows)} historical fights)')
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='UFC Oracle dataset builder')
-    parser.add_argument('--since', type=int, default=None,
-                        help='Incremental mode: only fetch events from this year onward (e.g. --since 2026)')
-    args = parser.parse_args()
-
-    df = build_dataset(since_year=args.since)
-    if df is not None and len(df) > 0:
-        log.info(f'Done. Shape: {df.shape}. Label balance: {df["label"].value_counts().to_dict()}')
-
 # ─── Helpers ─────────────────────────────────────────────────────────────────
+# Must be defined before build_dataset() calls them at runtime.
+
+import re as _re
 
 def extract_number(s: str) -> float | None:
-    import re
-    m = re.search(r'(\d+\.?\d*)', s)
+    m = _re.search(r'(\d+\.?\d*)', s)
     return float(m.group(1)) if m else None
 
 def extract_percent(s: str) -> float | None:
-    import re
-    m = re.search(r'(\d+\.?\d*)\s*%', s)
+    m = _re.search(r'(\d+\.?\d*)\s*%', s)
     if m:
         return float(m.group(1)) / 100
     return extract_number(s)
 
 def parse_height(s: str) -> float | None:
-    import re
-    m = re.search(r"(\d+)'\s*(\d+)\"", s)
+    m = _re.search(r"(\d+)'\s*(\d+)\"", s)
     if m:
         return int(m.group(1)) * 12 + int(m.group(2))
     return None
@@ -490,3 +480,13 @@ def normalize_method(s: str) -> str:
     if 'DEC' in s:
         return 'Decision'
     return 'Other'
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='UFC Oracle dataset builder')
+    parser.add_argument('--since', type=int, default=None,
+                        help='Incremental mode: only fetch events from this year onward (e.g. --since 2026)')
+    args = parser.parse_args()
+
+    df = build_dataset(since_year=args.since)
+    if df is not None and len(df) > 0:
+        log.info(f'Done. Shape: {df.shape}. Label balance: {df["label"].value_counts().to_dict()}')
