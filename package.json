@@ -9,6 +9,7 @@
     "start": "node --loader ts-node/esm src/index.ts",
     "dev": "node --loader ts-node/esm src/index.ts",
     "pipeline": "node --loader ts-node/esm src/index.ts --run pipeline",
+    "pipeline:save": "node --loader ts-node/esm src/index.ts --run save-picks",
     "alerts:picks": "node --loader ts-node/esm src/index.ts --alert picks",
     "alerts:recap": "node --loader ts-node/esm src/index.ts --alert recap",
     "alerts:updated": "node --loader ts-node/esm src/index.ts --alert updated",

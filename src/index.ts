@@ -2,9 +2,10 @@
 // Entrypoint for GitHub Actions workflows.
 //
 // Modes:
-//   --alert picks      → Monday fight card predictions (fight-week-predictions.yml)
-//   --alert updated    → Thursday updated predictions (updated-predictions.yml)
-//   --alert recap      → Sunday post-event recap (post-event-recap.yml)
+//   --run save-picks   → Monday: generate + save predictions to DB (no Discord)
+//   --alert updated    → Thursday: re-generate + send Discord embed
+//   --alert recap      → Sunday: score results, update Elo, send Discord recap
+//   --alert picks      → Send predictions Discord embed immediately (manual/testing)
 //   --run scrape-fighters → Manual fighter DB refresh (fighter-db-update.yml)
 //   --run scrape-card  → Manual fight card fetch
 
@@ -37,34 +38,33 @@ async function main(): Promise<void> {
     const mode = args[runIdx + 1];
     if (mode === 'scrape-fighters') await runFighterScrape();
     else if (mode === 'scrape-card') await runFightCardFetch();
+    else if (mode === 'save-picks') await runSavePicks();
     else logger.error({ mode }, 'Unknown run mode');
   } else {
-    logger.info('No mode specified. Use --alert picks|updated|recap or --run scrape-fighters|scrape-card');
+    logger.info('No mode specified. Use --alert picks|updated|recap or --run scrape-fighters|scrape-card|save-picks');
   }
 
   persistDb();
 }
 
-// ─── Fight card predictions (Monday / Thursday) ───────────────────────────────
+// ─── Build + save predictions (shared logic) ─────────────────────────────────
 
-async function runFightCardPredictions(isUpdate: boolean): Promise<void> {
-  logger.info({ isUpdate }, 'Running fight card predictions');
-
+async function buildAndSavePredictions(): Promise<{ predictions: Prediction[]; eventName: string } | null> {
   const nextEvent = await getNextUFCEvent();
   if (!nextEvent) {
     logger.info('No upcoming UFC event found');
-    return;
+    return null;
   }
 
   if (!isFightWeek(nextEvent.eventDate)) {
     logger.info({ eventDate: nextEvent.eventDate }, 'Not fight week — skipping predictions');
-    return;
+    return null;
   }
 
   const card = await fetchFightCard(nextEvent.eventUrl);
   if (!card) {
     logger.error('Failed to fetch fight card');
-    return;
+    return null;
   }
 
   logger.info({ event: card.eventName, fights: card.fights.length }, 'Fight card fetched');
@@ -72,18 +72,37 @@ async function runFightCardPredictions(isUpdate: boolean): Promise<void> {
   const predictions = await generatePredictions(card);
   if (predictions.length === 0) {
     logger.warn('No predictions generated');
-    return;
+    return null;
   }
 
   for (const pred of predictions) {
     upsertPrediction(pred);
   }
 
+  logger.info({ count: predictions.length, event: card.eventName }, 'Predictions saved to DB');
+  return { predictions, eventName: card.eventName };
+}
+
+// ─── Monday: generate + save only (no Discord) ───────────────────────────────
+
+async function runSavePicks(): Promise<void> {
+  logger.info('Monday pipeline: generating predictions (saving to DB, no Discord alert)');
+  await buildAndSavePredictions();
+}
+
+// ─── Thursday: regenerate + send Discord embed ────────────────────────────────
+
+async function runFightCardPredictions(isUpdate: boolean): Promise<void> {
+  logger.info({ isUpdate }, 'Running fight card predictions + Discord alert');
+
+  const result = await buildAndSavePredictions();
+  if (!result) return;
+
   const stats = getYTDAccuracy();
-  const sent = await sendFightCardPredictions(predictions, stats, isUpdate);
+  const sent = await sendFightCardPredictions(result.predictions, stats, isUpdate);
 
   if (sent) {
-    logger.info({ count: predictions.length, isUpdate }, 'Fight card predictions sent to Discord');
+    logger.info({ count: result.predictions.length, isUpdate }, 'Fight card predictions sent to Discord');
   }
 }
 

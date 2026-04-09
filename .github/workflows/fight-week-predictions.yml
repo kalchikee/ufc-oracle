@@ -2,7 +2,8 @@ name: Fight Week Predictions
 
 on:
   schedule:
-    # Every Monday at 10AM ET (14:00 UTC) — check for Saturday event, generate picks
+    # Every Monday at 10AM ET (14:00 UTC) — generate predictions and save to DB (no Discord)
+    # Thursday workflow picks them up and sends the Discord embed
     - cron: '0 14 * * 1'
   workflow_dispatch:   # Manual trigger for testing
 
@@ -43,10 +44,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate and send fight card predictions
-        run: npm run alerts:picks
+      - name: Generate and save predictions (no Discord)
+        run: npm run pipeline:save
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           LOG_LEVEL: info
           LOG_FORMAT: json
 
