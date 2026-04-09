@@ -1,9 +1,11 @@
 // UFC Oracle v4.1 — Prediction Runner
 // Loads ML model weights and generates predictions for an upcoming fight card.
+// Inference order: Python (XGBoost or LR via predict.py) → TypeScript LR fallback
 
 import { readFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { spawnSync } from 'child_process';
 import type {
   Fighter, FightCard, FightCardBout, Prediction,
   ModelWeights, MethodModelWeights, CalibrationWeights,
@@ -184,6 +186,43 @@ export function computeEdge(
   return { vegasProb: cleanA, edge, edgeCategory };
 }
 
+// ─── Python batch inference ───────────────────────────────────────────────────
+
+interface PythonPrediction {
+  winnerProb: number;
+  koProb: number;
+  subProb: number;
+  decProb: number;
+}
+
+function batchPythonInference(
+  items: Array<{ featureVector: Record<string, number> }>,
+): PythonPrediction[] | null {
+  const scriptPath = resolve(__dirname, '../../python/predict.py');
+  if (!existsSync(scriptPath)) return null;
+
+  const pythonCmds = ['python3', 'python'];
+  for (const cmd of pythonCmds) {
+    const result = spawnSync(cmd, [scriptPath], {
+      input: JSON.stringify(items),
+      encoding: 'utf-8',
+      timeout: 30_000,
+    });
+    if (result.status === 0 && result.stdout) {
+      try {
+        return JSON.parse(result.stdout) as PythonPrediction[];
+      } catch {
+        logger.warn('Python inference: failed to parse stdout');
+        return null;
+      }
+    }
+    if (result.error?.message?.includes('ENOENT')) continue; // try next python cmd
+    if (result.stderr) logger.warn({ stderr: result.stderr }, 'Python inference stderr');
+    return null;
+  }
+  return null;
+}
+
 // ─── Main prediction function ─────────────────────────────────────────────────
 
 export async function generatePredictions(
@@ -193,38 +232,74 @@ export async function generatePredictions(
   const methodModel = loadModel<MethodModelWeights>('method_model.json');
   const calibration = loadModel<CalibrationWeights>('calibration.json');
 
-  const predictions: Prediction[] = [];
+  // Resolve all fighters and build feature vectors first
+  const bouts: Array<{
+    bout: FightCardBout;
+    fighterA: Fighter;
+    fighterB: Fighter;
+    featureVector: ReturnType<typeof buildFeatureVector>;
+    normalizedFeatures: Record<string, number>;
+  }> = [];
 
   for (const bout of card.fights) {
     try {
       const fighterA = await resolveFighter(bout.fighterAId, bout.fighterA);
       const fighterB = await resolveFighter(bout.fighterBId, bout.fighterB);
-
       if (!fighterA || !fighterB) {
         logger.warn({ boutA: bout.fighterA, boutB: bout.fighterB }, 'Fighter not found in DB, skipping');
         continue;
       }
-
       const featureVector = buildFeatureVector(fighterA, fighterB, bout, card.location);
       const normalizedFeatures = normalizeFeatures(featureVector);
+      bouts.push({ bout, fighterA, fighterB, featureVector, normalizedFeatures });
+    } catch (err) {
+      logger.error({ err, bout: bout.fighterA + ' vs ' + bout.fighterB }, 'Feature engineering failed');
+    }
+  }
 
+  // Attempt Python batch inference for all bouts at once
+  const pythonResults = batchPythonInference(
+    bouts.map(b => ({ featureVector: b.normalizedFeatures })),
+  );
+  if (pythonResults) {
+    logger.info({ count: pythonResults.length }, 'Python inference succeeded');
+  } else {
+    logger.warn('Python inference unavailable, using TypeScript fallback');
+  }
+
+  const predictions: Prediction[] = [];
+
+  for (let i = 0; i < bouts.length; i++) {
+    const { bout, fighterA, fighterB, featureVector, normalizedFeatures } = bouts[i];
+    try {
       let fighterAWinProb: number;
-      if (winnerModel) {
-        fighterAWinProb = predictWinner(normalizedFeatures, winnerModel, calibration);
+      let methodProbs: { koProb: number; submissionProb: number; decisionProb: number; otherProb: number };
+
+      if (pythonResults && pythonResults[i]) {
+        const py = pythonResults[i];
+        fighterAWinProb = py.winnerProb;
+        methodProbs = {
+          koProb: py.koProb,
+          submissionProb: py.subProb,
+          decisionProb: py.decProb,
+          otherProb: Math.max(0, 1 - py.koProb - py.subProb - py.decProb),
+        };
       } else {
-        fighterAWinProb = heuristicWinnerProb(normalizedFeatures);
+        // TypeScript fallback
+        if (winnerModel) {
+          fighterAWinProb = predictWinner(normalizedFeatures, winnerModel, calibration);
+        } else {
+          fighterAWinProb = heuristicWinnerProb(normalizedFeatures);
+        }
+        if (methodModel) {
+          methodProbs = predictMethod(normalizedFeatures, fighterAWinProb, methodModel);
+        } else {
+          methodProbs = heuristicMethodProbs(fighterA, fighterB, fighterAWinProb);
+        }
       }
 
       const fighterBWinProb = 1 - fighterAWinProb;
       const predictedWinner = fighterAWinProb >= 0.5 ? fighterA : fighterB;
-
-      let methodProbs: { koProb: number; submissionProb: number; decisionProb: number; otherProb: number };
-      if (methodModel) {
-        methodProbs = predictMethod(normalizedFeatures, fighterAWinProb, methodModel);
-      } else {
-        methodProbs = heuristicMethodProbs(fighterA, fighterB, fighterAWinProb);
-      }
-
       const predictedMethod = determinePredictedMethod(methodProbs);
       const confidenceTier = getConfidenceTier(fighterAWinProb);
 
