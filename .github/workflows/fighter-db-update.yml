@@ -1,7 +1,10 @@
 name: Fighter DB Update
 
 on:
-  workflow_dispatch:   # Manual only — run monthly to refresh fighter stats
+  schedule:
+    # 1st of every month at 6AM ET (10:00 UTC) — keep fighter stats current
+    - cron: '0 10 1 * *'
+  workflow_dispatch:   # Also manually triggerable
     inputs:
       limit:
         description: 'Max fighters to scrape (leave empty for all ~700 active fighters)'

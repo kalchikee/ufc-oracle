@@ -1,0 +1,121 @@
+name: Year-Start Refresh
+
+on:
+  schedule:
+    # January 1st at 8AM ET (13:00 UTC) — annual fighter scrape + dataset update + model retrain
+    - cron: '0 13 1 1 *'
+  workflow_dispatch:   # Manual trigger (also useful for first-time setup)
+    inputs:
+      since_year:
+        description: 'Append events from this year onward (default: current year)'
+        required: false
+        default: ''
+
+jobs:
+  year-start-refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180   # Full scrape + retrain can take 2–3 hours
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # ── Node.js setup ────────────────────────────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ── Python setup ─────────────────────────────────────────────────────────
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: pip install -r python/requirements.txt
+
+      # ── Restore artifacts ────────────────────────────────────────────────────
+      - name: Restore fighter database
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          name: ufc-oracle-db
+          path: data/
+          if_no_artifact_found: ignore
+          workflow_conclusion: ''
+        continue-on-error: true
+
+      - name: Restore training dataset
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          name: ufc-oracle-training-dataset
+          path: data/
+          if_no_artifact_found: ignore
+          workflow_conclusion: ''
+        continue-on-error: true
+
+      - name: Restore ML model
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          name: ufc-oracle-model
+          path: model/
+          if_no_artifact_found: ignore
+          workflow_conclusion: ''
+        continue-on-error: true
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      # ── Step 1: Refresh fighter stats ────────────────────────────────────────
+      - name: Refresh fighter stats from UFCStats.com
+        run: npm run scrape:fighters
+        env:
+          LOG_LEVEL: info
+          LOG_FORMAT: json
+
+      # ── Step 2: Incremental dataset update ───────────────────────────────────
+      - name: Compute since_year
+        id: since
+        run: |
+          YEAR="${{ github.event.inputs.since_year }}"
+          if [ -z "$YEAR" ]; then
+            YEAR=$(date +%Y)
+          fi
+          echo "year=$YEAR" >> $GITHUB_OUTPUT
+
+      - name: Append new year's fights to training dataset
+        run: python python/build_dataset.py --since ${{ steps.since.outputs.year }}
+
+      # ── Step 3: Retrain models on updated dataset ─────────────────────────────
+      - name: Retrain winner + method models
+        run: python python/train_model.py
+
+      # ── Save artifacts ───────────────────────────────────────────────────────
+      - name: Save updated fighter database
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ufc-oracle-db
+          path: data/oracle.sqlite
+          retention-days: 60
+          overwrite: true
+
+      - name: Save updated training dataset
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ufc-oracle-training-dataset
+          path: data/training_dataset.csv
+          retention-days: 60
+          overwrite: true
+
+      - name: Save updated ML models
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ufc-oracle-model
+          path: model/
+          retention-days: 60
+          overwrite: true
