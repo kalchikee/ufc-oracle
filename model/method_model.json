@@ -1,0 +1,16 @@
+{
+  "_note": "Placeholder — run 'npm run build-dataset && npm run train' to generate real method model",
+  "intercept": [-0.5, -1.5, 0.8],
+  "coefficients": {
+    "elo_diff": [0.002, 0.001, -0.002],
+    "knockdown_rate_diff": [0.3, -0.1, -0.2],
+    "submission_avg_diff": [-0.1, 0.3, -0.15],
+    "finish_rate_diff": [0.2, 0.15, -0.25],
+    "decision_rate_diff": [-0.2, -0.1, 0.25]
+  },
+  "classes": ["KO/TKO", "Submission", "Decision"],
+  "featureNames": ["elo_diff", "knockdown_rate_diff", "submission_avg_diff", "finish_rate_diff", "decision_rate_diff"],
+  "trainedOn": "placeholder",
+  "cvAccuracy": 0.0,
+  "version": "4.1.0-placeholder"
+}

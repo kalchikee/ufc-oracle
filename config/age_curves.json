@@ -1,0 +1,24 @@
+{
+  "divisions": {
+    "Heavyweight": { "peak_start": 28, "peak_end": 35, "decline_rate": 0.015, "note": "Power lasts longer; peak extends to ~33–35" },
+    "LightHeavyweight": { "peak_start": 28, "peak_end": 33, "decline_rate": 0.016 },
+    "Middleweight": { "peak_start": 28, "peak_end": 32, "decline_rate": 0.016 },
+    "Welterweight": { "peak_start": 27, "peak_end": 32, "decline_rate": 0.017 },
+    "Lightweight": { "peak_start": 27, "peak_end": 31, "decline_rate": 0.017 },
+    "Featherweight": { "peak_start": 26, "peak_end": 30, "decline_rate": 0.018 },
+    "Bantamweight": { "peak_start": 26, "peak_end": 30, "decline_rate": 0.018, "note": "Lighter classes peak earlier, decline gradually" },
+    "Flyweight": { "peak_start": 25, "peak_end": 29, "decline_rate": 0.018 },
+    "Strawweight": { "peak_start": 24, "peak_end": 29, "decline_rate": 0.018 },
+    "WomenStrawweight": { "peak_start": 24, "peak_end": 29, "decline_rate": 0.018 },
+    "WomenFlyweight": { "peak_start": 25, "peak_end": 30, "decline_rate": 0.018 },
+    "WomenBantamweight": { "peak_start": 26, "peak_end": 30, "decline_rate": 0.018 },
+    "WomenFeatherweight": { "peak_start": 26, "peak_end": 31, "decline_rate": 0.018 }
+  },
+  "layoff_penalties": {
+    "0_to_6_months": 0.0,
+    "6_to_12_months": -0.02,
+    "12_to_18_months": -0.05,
+    "over_18_months": -0.08,
+    "note": "Layoff due to injury vs lack of opponents — different implications. These are approximate penalties."
+  }
+}

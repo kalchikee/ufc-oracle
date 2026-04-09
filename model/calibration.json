@@ -1,0 +1,6 @@
+{
+  "_note": "Placeholder Platt scaling — run training to generate real calibration",
+  "a": 1.0,
+  "b": 0.0,
+  "trainedOn": "placeholder"
+}
