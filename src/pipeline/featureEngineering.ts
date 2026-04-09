@@ -5,8 +5,8 @@
 import type { Fighter, FightCardBout, FeatureVector, WeightClass } from '../types.js';
 import { eloFeatures } from '../elo/eloSystem.js';
 import { encodeStyleMatchup, encodeStanceMatchup } from '../style-model/styleClassifier.js';
-import campData from '../../config/camps.json' assert { type: 'json' };
-import ageCurves from '../../config/age_curves.json' assert { type: 'json' };
+import campData from '../../config/camps.json' with { type: 'json' };
+import ageCurves from '../../config/age_curves.json' with { type: 'json' };
 
 // ─── Weight class encoding ────────────────────────────────────────────────────
 

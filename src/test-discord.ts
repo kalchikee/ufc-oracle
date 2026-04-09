@@ -1,6 +1,6 @@
 // UFC Oracle v4.1 — Discord test script
 // Sends a realistic mock fight card predictions + recap to verify webhook + embed format.
-// Run: node --loader ts-node/esm src/test-discord.ts
+// Run: tsx src/test-discord.ts
 
 import 'dotenv/config';
 import type { Prediction, AccuracyStats } from './types.js';
