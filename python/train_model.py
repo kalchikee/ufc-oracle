@@ -116,7 +116,7 @@ def walk_forward_cv_lr(df: pd.DataFrame, C: float, weights: np.ndarray) -> float
         X_tr_s = sc.fit_transform(X_tr)
         X_te_s = sc.transform(X_te)
 
-        m = LogisticRegression(C=C, penalty='l2', max_iter=1000, solver='lbfgs')
+        m = LogisticRegression(C=C, max_iter=1000, solver='lbfgs')
         m.fit(X_tr_s, y_tr, sample_weight=w_tr)
         all_preds.extend(m.predict(X_te_s))
         all_labels.extend(y_te)
@@ -169,12 +169,12 @@ def train_lr(df: pd.DataFrame, weights: np.ndarray) -> tuple:
     scaler = StandardScaler()
     X_s = scaler.fit_transform(X)
 
-    model = LogisticRegression(C=best_c, penalty='l2', max_iter=1000, solver='lbfgs')
+    model = LogisticRegression(C=best_c, max_iter=1000, solver='lbfgs')
     model.fit(X_s, y, sample_weight=weights)
 
     # Platt scaling
     cal = CalibratedClassifierCV(
-        LogisticRegression(C=best_c, penalty='l2', max_iter=1000, solver='lbfgs'),
+        LogisticRegression(C=best_c, max_iter=1000, solver='lbfgs'),
         method='sigmoid', cv=5
     )
     cal.fit(X_s, y, sample_weight=weights)
@@ -307,7 +307,7 @@ def train_method_model(df: pd.DataFrame, winner_probs: np.ndarray, weights: np.n
     scaler = StandardScaler()
     X_s = scaler.fit_transform(X_with_winner)
 
-    model = LogisticRegression(C=1.0, penalty='l2', max_iter=1000, solver='lbfgs', multi_class='multinomial')
+    model = LogisticRegression(C=1.0, max_iter=1000, solver='lbfgs')
     model.fit(X_s, y, sample_weight=method_weights)
 
     # Simple walk-forward accuracy estimate
