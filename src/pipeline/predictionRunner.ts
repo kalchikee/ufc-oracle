@@ -12,7 +12,8 @@ import type {
   ConfidenceTier, EdgeCategory, FightMethod,
 } from '../types.js';
 import { buildFeatureVector, normalizeFeatures } from './featureEngineering.js';
-import { getFighterByName, getFighter } from '../db/database.js';
+import { getFighterByName, getFighter, upsertFighter } from '../db/database.js';
+import { scrapeFighter } from '../scraper/ufcStatsScraper.js';
 import { logger } from '../logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -257,9 +258,11 @@ export async function generatePredictions(
     }
   }
 
-  // Attempt Python batch inference for all bouts at once
+  // Attempt Python batch inference for all bouts at once.
+  // Send raw (un-normalized) features — the Python model applies its own internal scaler.
+  // The placeholder model has identity scalers (mean=0, std=1), so raw features pass through.
   const pythonResults = batchPythonInference(
-    bouts.map(b => ({ featureVector: b.normalizedFeatures })),
+    bouts.map(b => ({ featureVector: b.featureVector as unknown as Record<string, number> })),
   );
   if (pythonResults) {
     logger.info({ count: pythonResults.length }, 'Python inference succeeded');
@@ -277,7 +280,9 @@ export async function generatePredictions(
 
       if (pythonResults && pythonResults[i]) {
         const py = pythonResults[i];
-        fighterAWinProb = py.winnerProb;
+        // Clamp to [0.05, 0.95] — the placeholder model can't distinguish strength of schedule,
+        // so extreme certainty is noise. A trained model may lift this constraint.
+        fighterAWinProb = Math.min(0.95, Math.max(0.05, py.winnerProb));
         methodProbs = {
           koProb: py.koProb,
           submissionProb: py.subProb,
@@ -285,14 +290,15 @@ export async function generatePredictions(
           otherProb: Math.max(0, 1 - py.koProb - py.subProb - py.decProb),
         };
       } else {
-        // TypeScript fallback
+        // TypeScript fallback — use raw (un-normalized) features to match hand-tuned model coefficients
+        const rawFeatures = featureVector as unknown as Record<string, number>;
         if (winnerModel) {
-          fighterAWinProb = predictWinner(normalizedFeatures, winnerModel, calibration);
+          fighterAWinProb = predictWinner(rawFeatures, winnerModel, calibration);
         } else {
-          fighterAWinProb = heuristicWinnerProb(normalizedFeatures);
+          fighterAWinProb = heuristicWinnerProb(rawFeatures);
         }
         if (methodModel) {
-          methodProbs = predictMethod(normalizedFeatures, fighterAWinProb, methodModel);
+          methodProbs = predictMethod(rawFeatures, fighterAWinProb, methodModel);
         } else {
           methodProbs = heuristicMethodProbs(fighterA, fighterB, fighterAWinProb);
         }
@@ -362,7 +368,25 @@ async function resolveFighter(id?: string, name?: string): Promise<Fighter | und
     const f = getFighter(id);
     if (f) return f;
   }
-  if (name) return getFighterByName(name) ?? undefined;
+  if (name) {
+    const byName = getFighterByName(name);
+    if (byName) return byName;
+  }
+  // Not in DB — try scraping UFCStats on-demand using the fighter ID
+  if (id) {
+    logger.info({ fighterId: id, name }, 'Fighter not in DB — scraping UFCStats on demand');
+    try {
+      const fighterUrl = `http://www.ufcstats.com/fighter-details/${id}`;
+      const scraped = await scrapeFighter(fighterUrl);
+      if (scraped) {
+        upsertFighter(scraped);
+        logger.info({ name: scraped.name, fighterId: scraped.fighterId }, 'Added missing fighter from UFCStats');
+        return scraped;
+      }
+    } catch (err) {
+      logger.warn({ err, id, name }, 'On-demand fighter scrape failed');
+    }
+  }
   return undefined;
 }
 
