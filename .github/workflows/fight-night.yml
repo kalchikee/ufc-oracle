@@ -24,15 +24,8 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
-      # Only pull artifacts from SUCCESSFUL runs — prevents stale model drift
-      - name: Restore database
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          name: ufc-oracle-db
-          path: data/
-          if_no_artifact_found: ignore
-          workflow_conclusion: success
-        continue-on-error: true
+      # DB is committed to the repo (data/oracle.sqlite) — checkout@v4 has it.
+      # Don't overwrite with artifact; the committed DB has 2121 fighters.
 
       - name: Install dependencies
         run: npm ci
