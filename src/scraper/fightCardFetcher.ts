@@ -8,6 +8,7 @@ import { logger } from '../logger.js';
 import type { FightCard, FightCardBout, WeightClass } from '../types.js';
 
 const UFCSTATS_EVENTS_URL = 'http://www.ufcstats.com/statistics/events/upcoming';
+const UFCSTATS_COMPLETED_URL = 'http://www.ufcstats.com/statistics/events/completed';
 const BASE_URL = 'http://www.ufcstats.com';
 const DELAY_MS = 1200;
 
@@ -29,26 +30,48 @@ async function fetchHtml(url: string): Promise<cheerio.CheerioAPI> {
 // ─── Check if UFC event this Saturday ────────────────────────────────────────
 
 export async function getNextUFCEvent(): Promise<{ eventId: string; eventUrl: string; eventDate: string } | null> {
-  try {
-    const $ = await fetchHtml(UFCSTATS_EVENTS_URL);
-    // Skip header rows (first 2 rows have no link); find first row with an event link
-    let firstRow = $('tr.b-statistics__table-row').filter((_i, el) => $(el).find('a.b-link').length > 0).first();
-    const link = firstRow.find('a.b-link').first();
-    const eventUrl = link.attr('href') || '';
-    const eventName = link.text().trim();
-    const dateText = firstRow.find('span.b-statistics__date').text().trim();
+  // UFCStats.com is quirky: events happening TODAY get moved from the "upcoming"
+  // page to "completed" even before they start. So we check both pages and pick
+  // the earliest event whose date is today-or-later.
+  const candidates: Array<{ eventId: string; eventUrl: string; eventDate: string; eventName: string }> = [];
 
-    if (!eventUrl) return null;
+  for (const url of [UFCSTATS_EVENTS_URL, UFCSTATS_COMPLETED_URL]) {
+    try {
+      const $ = await fetchHtml(url);
+      // Check the first ~5 rows with event links on each page
+      const rows = $('tr.b-statistics__table-row').filter((_i, el) => $(el).find('a.b-link').length > 0).slice(0, 5);
+      rows.each((_i, el) => {
+        const link = $(el).find('a.b-link').first();
+        const eventUrl = link.attr('href') || '';
+        const eventName = link.text().trim();
+        const dateText = $(el).find('span.b-statistics__date').text().trim();
+        if (!eventUrl) return;
+        const eventDate = parseDateString(dateText);
+        if (!eventDate) return;
+        candidates.push({
+          eventId: eventUrl.split('/event-details/')[1] ?? eventUrl,
+          eventUrl,
+          eventDate,
+          eventName,
+        });
+      });
+    } catch (err) {
+      logger.warn({ err, url }, 'Failed to fetch UFC events page (continuing)');
+    }
+  }
 
-    const eventId = eventUrl.split('/event-details/')[1] ?? eventUrl;
-    const eventDate = parseDateString(dateText);
-
-    logger.info({ eventName, eventDate, eventUrl }, 'Next UFC event found');
-    return { eventId, eventUrl, eventDate };
-  } catch (err) {
-    logger.error({ err }, 'Failed to fetch upcoming UFC events');
+  // Pick the earliest event whose date is today or later (in local time)
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const futureOrToday = candidates.filter(c => new Date(c.eventDate) >= now);
+  if (futureOrToday.length === 0) {
+    logger.info('No upcoming or same-day UFC events found on UFCStats');
     return null;
   }
+  futureOrToday.sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
+  const next = futureOrToday[0];
+  logger.info({ eventName: next.eventName, eventDate: next.eventDate, eventUrl: next.eventUrl }, 'Next UFC event found');
+  return { eventId: next.eventId, eventUrl: next.eventUrl, eventDate: next.eventDate };
 }
 
 export function isFightWeek(eventDate: string): boolean {
