@@ -26,7 +26,7 @@ jobs:
           name: ufc-oracle-db
           path: data/
           if_no_artifact_found: ignore
-          workflow_conclusion: ''
+          workflow_conclusion: success
         continue-on-error: true
 
       - name: Restore ML model
@@ -35,7 +35,7 @@ jobs:
           name: ufc-oracle-model
           path: model/
           if_no_artifact_found: ignore
-          workflow_conclusion: ''
+          workflow_conclusion: success
         continue-on-error: true
 
       - name: Install dependencies
