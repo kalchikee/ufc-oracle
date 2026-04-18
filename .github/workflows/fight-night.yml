@@ -2,11 +2,12 @@ name: Fight Night Predictions
 
 on:
   schedule:
-    # Saturdays at 2 PM ET (18:00 UTC) — final predictions before main card
-    # UFC events are almost always Saturday nights (main card ~10 PM ET)
-    - cron: '0 18 * * 6'
-    # Saturdays at 6 PM ET (22:00 UTC) — last-minute update 1 hour before prelims
-    - cron: '0 22 * * 6'
+    # Run DAILY at 2 PM ET (18:00 UTC) and 6 PM ET (22:00 UTC).
+    # The job uses --alert fight-day which checks isFightDay() and only
+    # sends to Discord if the event is actually today. Works for any
+    # event day (Sat main cards, Wed international, Sun UK, etc).
+    - cron: '0 18 * * *'
+    - cron: '0 22 * * *'
   workflow_dispatch:
 
 jobs:
@@ -45,8 +46,8 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r python/requirements.txt
 
-      - name: Send fight-night predictions to Discord
-        run: npm run alerts:updated
+      - name: Send fight-night predictions to Discord (only if event is today)
+        run: npm run alerts:fight-day
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}

@@ -31,7 +31,8 @@ async function fetchHtml(url: string): Promise<cheerio.CheerioAPI> {
 export async function getNextUFCEvent(): Promise<{ eventId: string; eventUrl: string; eventDate: string } | null> {
   try {
     const $ = await fetchHtml(UFCSTATS_EVENTS_URL);
-    const firstRow = $('tr.b-statistics__table-row').first();
+    // Skip header rows (first 2 rows have no link); find first row with an event link
+    let firstRow = $('tr.b-statistics__table-row').filter((_i, el) => $(el).find('a.b-link').length > 0).first();
     const link = firstRow.find('a.b-link').first();
     const eventUrl = link.attr('href') || '';
     const eventName = link.text().trim();
@@ -54,8 +55,21 @@ export function isFightWeek(eventDate: string): boolean {
   const now = new Date();
   const event = new Date(eventDate);
   const diffDays = (event.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-  // Fight week = event is within the next 7 days
-  return diffDays >= 0 && diffDays <= 7;
+  // Fight week = event is within the next 7 days OR today (allow same-day run)
+  return diffDays >= -1 && diffDays <= 7;
+}
+
+/** Returns true only if the event is TODAY (matches calendar date in local time).
+ *  Used by the fight-night workflow to send Discord only on event day,
+ *  regardless of what day of the week the event falls on. */
+export function isFightDay(eventDate: string): boolean {
+  const now = new Date();
+  const event = new Date(eventDate);
+  return (
+    now.getFullYear() === event.getFullYear() &&
+    now.getMonth()    === event.getMonth()    &&
+    now.getDate()     === event.getDate()
+  );
 }
 
 // ─── Fight card scraping ──────────────────────────────────────────────────────

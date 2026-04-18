@@ -13,6 +13,7 @@
     "alerts:picks": "tsx src/index.ts --alert picks",
     "alerts:recap": "tsx src/index.ts --alert recap",
     "alerts:updated": "tsx src/index.ts --alert updated",
+    "alerts:fight-day": "tsx src/index.ts --alert fight-day",
     "scrape:fighters": "tsx src/index.ts --run scrape-fighters",
     "scrape:card": "tsx src/index.ts --run scrape-card",
     "train": "python python/train_model.py",

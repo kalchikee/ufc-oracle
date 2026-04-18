@@ -12,7 +12,7 @@
 import 'dotenv/config';
 import { logger } from './logger.js';
 import { initDb, upsertFighter, upsertPrediction, getLatestPredictions, getYTDAccuracy, getPredictionsByEvent, logEventAccuracy, persistDb } from './db/database.js';
-import { getNextUFCEvent, isFightWeek, fetchFightCard, fetchEventResults } from './scraper/fightCardFetcher.js';
+import { getNextUFCEvent, isFightWeek, isFightDay, fetchFightCard, fetchEventResults } from './scraper/fightCardFetcher.js';
 import { enrichWithOdds } from './scraper/oddsScraper.js';
 import { scrapeAllFighters } from './scraper/ufcStatsScraper.js';
 import { generatePredictions } from './pipeline/predictionRunner.js';
@@ -33,6 +33,7 @@ async function main(): Promise<void> {
     const mode = args[alertIdx + 1];
     if (mode === 'picks') await runFightCardPredictions(false);
     else if (mode === 'updated') await runFightCardPredictions(true);
+    else if (mode === 'fight-day') await runFightDayPredictions();
     else if (mode === 'recap') await runPostEventRecap();
     else logger.error({ mode }, 'Unknown alert mode');
   } else if (runIdx >= 0) {
@@ -107,6 +108,32 @@ async function runFightCardPredictions(isUpdate: boolean): Promise<void> {
 
   if (sent) {
     logger.info({ count: result.predictions.length, isUpdate }, 'Fight card predictions sent to Discord');
+  }
+}
+
+// ─── Fight day: send Discord ONLY if event is today ───────────────────────────
+// Used by the daily fight-night.yml workflow. Works regardless of what day
+// of the week the event falls on (Sat, Wed international, Sun UK cards, etc).
+
+async function runFightDayPredictions(): Promise<void> {
+  const nextEvent = await getNextUFCEvent();
+  if (!nextEvent) {
+    logger.info('No upcoming UFC event found');
+    return;
+  }
+  if (!isFightDay(nextEvent.eventDate)) {
+    logger.info({ eventDate: nextEvent.eventDate }, 'Not fight day today — skipping Discord alert');
+    return;
+  }
+
+  logger.info({ eventDate: nextEvent.eventDate }, 'Fight day detected — sending Discord predictions');
+  const result = await buildAndSavePredictions();
+  if (!result) return;
+
+  const stats = getYTDAccuracy();
+  const sent = await sendFightCardPredictions(result.predictions, stats, true);
+  if (sent) {
+    logger.info({ count: result.predictions.length }, 'Fight-day predictions sent to Discord');
   }
 }
 
