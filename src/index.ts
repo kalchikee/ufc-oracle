@@ -18,6 +18,7 @@ import { scrapeAllFighters } from './scraper/ufcStatsScraper.js';
 import { generatePredictions } from './pipeline/predictionRunner.js';
 import { sendFightCardPredictions, sendPostEventRecap, type RecapResult } from './discord/discord.js';
 import { applyEloUpdate } from './elo/eloSystem.js';
+import { writePredictionsFile } from './kalshi/predictionsFile.js';
 import type { FightMethod, Prediction } from './types.js';
 
 const args = process.argv.slice(2);
@@ -82,6 +83,15 @@ async function buildAndSavePredictions(): Promise<{ predictions: Prediction[]; e
 
   for (const pred of predictions) {
     upsertPrediction(pred);
+  }
+
+  // Write predictions JSON for kalshi-safety. Use the event date so the
+  // safety service fetches the file keyed to fight day.
+  try {
+    const outPath = writePredictionsFile(card.eventDate, predictions);
+    logger.info({ outPath, count: predictions.length }, 'Wrote kalshi-safety predictions JSON');
+  } catch (err) {
+    logger.warn({ err }, 'Failed to write predictions JSON (continuing)');
   }
 
   logger.info({ count: predictions.length, event: card.eventName }, 'Predictions saved to DB');
