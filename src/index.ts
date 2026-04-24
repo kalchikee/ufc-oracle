@@ -160,9 +160,14 @@ async function runPostEventRecap(): Promise<void> {
   const recapResults: RecapResult[] = [];
 
   for (const result of results) {
+    // FightResult has winnerId but NOT loserId. Derive loserId from the
+    // two fighter IDs in the result. Previous code referenced result.loserId
+    // which was always undefined → pred was always undefined → recap always
+    // reported 0 matching predictions.
+    const loserId = result.winnerId === result.fighterAId ? result.fighterBId : result.fighterAId;
     const pred = predictions.find(p =>
       (p.fighterAId === result.winnerId || p.fighterBId === result.winnerId) &&
-      (p.fighterAId === result.loserId || p.fighterBId === result.loserId)
+      (p.fighterAId === loserId || p.fighterBId === loserId)
     );
 
     if (pred) {

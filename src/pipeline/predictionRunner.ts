@@ -71,7 +71,7 @@ function predictMethod(
   winnerProb: number,
   model: MethodModelWeights,
 ): { koProb: number; submissionProb: number; decisionProb: number; otherProb: number } {
-  const featuresWithWinner = { ...features, predicted_winner_prob: winnerProb };
+  const featuresWithWinner: Record<string, number> = { ...(features as unknown as Record<string, number>), predicted_winner_prob: winnerProb };
   const classes = model.classes; // ['KO/TKO', 'Submission', 'Decision']
 
   const rawScores = classes.map((_, i) => {
