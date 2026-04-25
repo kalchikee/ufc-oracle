@@ -1,7 +1,7 @@
 {
   "sport": "UFC",
   "date": "2026-04-25",
-  "generatedAt": "2026-04-25T18:20:15.871Z",
+  "generatedAt": "2026-04-25T22:16:09.801Z",
   "picks": [
     {
       "gameId": "ufc-2026-04-25-davey-grant-adrian-luna-martinetti",
@@ -81,7 +81,7 @@
       "away": "Eric McConico",
       "pickedTeam": "Rodolfo Vieira",
       "pickedSide": "home",
-      "modelProb": 0.5927026949355481,
+      "modelProb": 0.592702694935548,
       "confidenceTier": "lean",
       "extra": {
         "fightId": "e60d773a0a42048a-6",
@@ -172,13 +172,13 @@
       }
     },
     {
-      "gameId": "ufc-2026-04-25-max-griffin-victor-valenzuela",
-      "home": "Max Griffin",
-      "away": "Victor Valenzuela",
+      "gameId": "ufc-2026-04-25-victor-valenzuela-max-griffin",
+      "home": "Victor Valenzuela",
+      "away": "Max Griffin",
       "pickedTeam": "Max Griffin",
-      "pickedSide": "home",
-      "modelProb": 0.7475807759001039,
-      "confidenceTier": "lock",
+      "pickedSide": "away",
+      "modelProb": 0.6682296693255046,
+      "confidenceTier": "high_conviction",
       "extra": {
         "fightId": "e60d773a0a42048a-11",
         "eventId": "e60d773a0a42048a",
@@ -190,9 +190,9 @@
         "isTitleFight": false,
         "scheduledRounds": 3,
         "predictedMethod": "Decision",
-        "koProb": 0.21599061656387475,
-        "submissionProb": 0.07898318367278585,
-        "decisionProb": 0.7050261997633394
+        "koProb": 0.18198954879314258,
+        "submissionProb": 0.06735312230778912,
+        "decisionProb": 0.7506573288990682
       }
     }
   ]
