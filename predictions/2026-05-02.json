@@ -1,7 +1,7 @@
 {
   "sport": "UFC",
   "date": "2026-05-02",
-  "generatedAt": "2026-04-27T14:41:35.105Z",
+  "generatedAt": "2026-04-30T14:49:47.251Z",
   "picks": [
     {
       "gameId": "ufc-2026-05-02-beneil-dariush-quillan-salkilld",
@@ -28,6 +28,30 @@
       }
     },
     {
+      "gameId": "ufc-2026-05-02-marwan-rahiki-ollie-schmid",
+      "home": "Marwan Rahiki",
+      "away": "Ollie Schmid",
+      "pickedTeam": "Marwan Rahiki",
+      "pickedSide": "home",
+      "modelProb": 0.8332658800191955,
+      "confidenceTier": "lock",
+      "extra": {
+        "fightId": "872b018076f831b0-3",
+        "eventId": "872b018076f831b0",
+        "eventName": "UFC Fight Night: Della Maddalena vs. Prates",
+        "eventDate": "2026-05-02",
+        "weightClass": "Featherweight",
+        "cardPosition": "main_card",
+        "isMainEvent": false,
+        "isTitleFight": false,
+        "scheduledRounds": 3,
+        "predictedMethod": "KO/TKO",
+        "koProb": 0.7110612939570485,
+        "submissionProb": 0.18721517694561524,
+        "decisionProb": 0.1017235290973363
+      }
+    },
+    {
       "gameId": "ufc-2026-05-02-shamil-gaziev-brando-pericic",
       "home": "Shamil Gaziev",
       "away": "Brando Pericic",
@@ -36,7 +60,7 @@
       "modelProb": 0.8478339754436875,
       "confidenceTier": "lock",
       "extra": {
-        "fightId": "872b018076f831b0-3",
+        "fightId": "872b018076f831b0-4",
         "eventId": "872b018076f831b0",
         "eventName": "UFC Fight Night: Della Maddalena vs. Prates",
         "eventDate": "2026-05-02",
@@ -60,7 +84,7 @@
       "modelProb": 0.6268866333759826,
       "confidenceTier": "strong",
       "extra": {
-        "fightId": "872b018076f831b0-5",
+        "fightId": "872b018076f831b0-6",
         "eventId": "872b018076f831b0",
         "eventName": "UFC Fight Night: Della Maddalena vs. Prates",
         "eventDate": "2026-05-02",
@@ -84,7 +108,7 @@
       "modelProb": 0.7208822258081535,
       "confidenceTier": "lock",
       "extra": {
-        "fightId": "872b018076f831b0-7",
+        "fightId": "872b018076f831b0-8",
         "eventId": "872b018076f831b0",
         "eventName": "UFC Fight Night: Della Maddalena vs. Prates",
         "eventDate": "2026-05-02",
@@ -108,7 +132,7 @@
       "modelProb": 0.6382755895696178,
       "confidenceTier": "strong",
       "extra": {
-        "fightId": "872b018076f831b0-8",
+        "fightId": "872b018076f831b0-9",
         "eventId": "872b018076f831b0",
         "eventName": "UFC Fight Night: Della Maddalena vs. Prates",
         "eventDate": "2026-05-02",
@@ -132,7 +156,7 @@
       "modelProb": 0.7089195442235317,
       "confidenceTier": "high_conviction",
       "extra": {
-        "fightId": "872b018076f831b0-9",
+        "fightId": "872b018076f831b0-10",
         "eventId": "872b018076f831b0",
         "eventName": "UFC Fight Night: Della Maddalena vs. Prates",
         "eventDate": "2026-05-02",
@@ -156,7 +180,7 @@
       "modelProb": 0.7645742345821452,
       "confidenceTier": "lock",
       "extra": {
-        "fightId": "872b018076f831b0-11",
+        "fightId": "872b018076f831b0-12",
         "eventId": "872b018076f831b0",
         "eventName": "UFC Fight Night: Della Maddalena vs. Prates",
         "eventDate": "2026-05-02",
