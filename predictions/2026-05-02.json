@@ -1,15 +1,15 @@
 {
   "sport": "UFC",
   "date": "2026-05-02",
-  "generatedAt": "2026-04-30T14:49:47.251Z",
+  "generatedAt": "2026-05-02T18:24:51.497Z",
   "picks": [
     {
-      "gameId": "ufc-2026-05-02-beneil-dariush-quillan-salkilld",
-      "home": "Beneil Dariush",
-      "away": "Quillan Salkilld",
+      "gameId": "ufc-2026-05-02-quillan-salkilld-beneil-dariush",
+      "home": "Quillan Salkilld",
+      "away": "Beneil Dariush",
       "pickedTeam": "Quillan Salkilld",
-      "pickedSide": "away",
-      "modelProb": 0.8206505090017889,
+      "pickedSide": "home",
+      "modelProb": 0.8306415137420923,
       "confidenceTier": "lock",
       "extra": {
         "fightId": "872b018076f831b0-1",
@@ -22,9 +22,9 @@
         "isTitleFight": false,
         "scheduledRounds": 3,
         "predictedMethod": "Decision",
-        "koProb": 0.12535454809381966,
-        "submissionProb": 0.049015967241659734,
-        "decisionProb": 0.8256294846645206
+        "koProb": 0.2949594778962402,
+        "submissionProb": 0.10208828558232849,
+        "decisionProb": 0.6029522365214314
       }
     },
     {
@@ -33,7 +33,7 @@
       "away": "Ollie Schmid",
       "pickedTeam": "Marwan Rahiki",
       "pickedSide": "home",
-      "modelProb": 0.8332658800191955,
+      "modelProb": 0.8735955582022268,
       "confidenceTier": "lock",
       "extra": {
         "fightId": "872b018076f831b0-3",
@@ -52,12 +52,12 @@
       }
     },
     {
-      "gameId": "ufc-2026-05-02-shamil-gaziev-brando-pericic",
-      "home": "Shamil Gaziev",
-      "away": "Brando Pericic",
+      "gameId": "ufc-2026-05-02-brando-pericic-shamil-gaziev",
+      "home": "Brando Pericic",
+      "away": "Shamil Gaziev",
       "pickedTeam": "Brando Pericic",
-      "pickedSide": "away",
-      "modelProb": 0.8478339754436875,
+      "pickedSide": "home",
+      "modelProb": 0.8590924046557376,
       "confidenceTier": "lock",
       "extra": {
         "fightId": "872b018076f831b0-4",
@@ -69,10 +69,10 @@
         "isMainEvent": false,
         "isTitleFight": false,
         "scheduledRounds": 3,
-        "predictedMethod": "Decision",
-        "koProb": 0.0028552574424658976,
-        "submissionProb": 0.0017274770846492826,
-        "decisionProb": 0.9954172654728848
+        "predictedMethod": "KO/TKO",
+        "koProb": 0.7921996196320186,
+        "submissionProb": 0.1772060899149598,
+        "decisionProb": 0.030594290453021616
       }
     },
     {
@@ -81,7 +81,7 @@
       "away": "Robert Bryczek",
       "pickedTeam": "Cam Rowston",
       "pickedSide": "home",
-      "modelProb": 0.6268866333759826,
+      "modelProb": 0.6307447937996397,
       "confidenceTier": "strong",
       "extra": {
         "fightId": "872b018076f831b0-6",
@@ -105,7 +105,7 @@
       "away": "Gerald Meerschaert",
       "pickedTeam": "Jacob Malkoun",
       "pickedSide": "home",
-      "modelProb": 0.7208822258081535,
+      "modelProb": 0.7420283190247997,
       "confidenceTier": "lock",
       "extra": {
         "fightId": "872b018076f831b0-8",
@@ -129,8 +129,8 @@
       "away": "Vince Morales",
       "pickedTeam": "Colby Thicknesse",
       "pickedSide": "home",
-      "modelProb": 0.6382755895696178,
-      "confidenceTier": "strong",
+      "modelProb": 0.6695925953524463,
+      "confidenceTier": "high_conviction",
       "extra": {
         "fightId": "872b018076f831b0-9",
         "eventId": "872b018076f831b0",
@@ -148,13 +148,13 @@
       }
     },
     {
-      "gameId": "ufc-2026-05-02-ben-johnston-wes-schultz",
-      "home": "Ben Johnston",
-      "away": "Wes Schultz",
+      "gameId": "ufc-2026-05-02-wes-schultz-benjamin-johnston",
+      "home": "Wes Schultz",
+      "away": "Benjamin Johnston",
       "pickedTeam": "Wes Schultz",
-      "pickedSide": "away",
-      "modelProb": 0.7089195442235317,
-      "confidenceTier": "high_conviction",
+      "pickedSide": "home",
+      "modelProb": 0.7441708905796474,
+      "confidenceTier": "lock",
       "extra": {
         "fightId": "872b018076f831b0-10",
         "eventId": "872b018076f831b0",
@@ -165,20 +165,44 @@
         "isMainEvent": false,
         "isTitleFight": false,
         "scheduledRounds": 3,
-        "predictedMethod": "Decision",
-        "koProb": 0.039360374205595725,
-        "submissionProb": 0.01745732933032276,
-        "decisionProb": 0.9431822964640815
+        "predictedMethod": "KO/TKO",
+        "koProb": 0.5356195740786823,
+        "submissionProb": 0.16343643847144027,
+        "decisionProb": 0.30094398744987727
       }
     },
     {
-      "gameId": "ufc-2026-05-02-dom-mar-fan-kody-steele",
-      "home": "Dom Mar Fan",
-      "away": "Kody Steele",
-      "pickedTeam": "Dom Mar Fan",
+      "gameId": "ufc-2026-05-02-jonathan-micallef-themba-gorimbo",
+      "home": "Jonathan Micallef",
+      "away": "Themba Gorimbo",
+      "pickedTeam": "Jonathan Micallef",
       "pickedSide": "home",
-      "modelProb": 0.7645742345821452,
-      "confidenceTier": "lock",
+      "modelProb": 0.5877627285492679,
+      "confidenceTier": "lean",
+      "extra": {
+        "fightId": "872b018076f831b0-11",
+        "eventId": "872b018076f831b0",
+        "eventName": "UFC Fight Night: Della Maddalena vs. Prates",
+        "eventDate": "2026-05-02",
+        "weightClass": "Welterweight",
+        "cardPosition": "early_prelim",
+        "isMainEvent": false,
+        "isTitleFight": false,
+        "scheduledRounds": 3,
+        "predictedMethod": "Decision",
+        "koProb": 0.3060641876737814,
+        "submissionProb": 0.10383414261717062,
+        "decisionProb": 0.590101669709048
+      }
+    },
+    {
+      "gameId": "ufc-2026-05-02-kody-steele-dom-mar-fan",
+      "home": "Kody Steele",
+      "away": "Dom Mar Fan",
+      "pickedTeam": "Dom Mar Fan",
+      "pickedSide": "away",
+      "modelProb": 0.6691873502880537,
+      "confidenceTier": "high_conviction",
       "extra": {
         "fightId": "872b018076f831b0-12",
         "eventId": "872b018076f831b0",
@@ -190,9 +214,9 @@
         "isTitleFight": false,
         "scheduledRounds": 3,
         "predictedMethod": "Decision",
-        "koProb": 0.14147751928280175,
-        "submissionProb": 0.055292696547172594,
-        "decisionProb": 0.8032297841700256
+        "koProb": 0.2689814222953252,
+        "submissionProb": 0.0931435931835766,
+        "decisionProb": 0.6378749845210983
       }
     }
   ]
