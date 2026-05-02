@@ -1,7 +1,7 @@
 {
   "sport": "UFC",
   "date": "2026-05-02",
-  "generatedAt": "2026-05-02T18:24:51.497Z",
+  "generatedAt": "2026-05-02T22:18:49.249Z",
   "picks": [
     {
       "gameId": "ufc-2026-05-02-quillan-salkilld-beneil-dariush",
@@ -57,7 +57,7 @@
       "away": "Shamil Gaziev",
       "pickedTeam": "Brando Pericic",
       "pickedSide": "home",
-      "modelProb": 0.8590924046557376,
+      "modelProb": 0.8590924046556608,
       "confidenceTier": "lock",
       "extra": {
         "fightId": "872b018076f831b0-4",
