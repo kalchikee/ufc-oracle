@@ -1,7 +1,7 @@
 {
   "sport": "UFC",
   "date": "2026-05-09",
-  "generatedAt": "2026-05-04T14:44:12.379Z",
+  "generatedAt": "2026-05-07T15:03:17.538Z",
   "picks": [
     {
       "gameId": "ufc-2026-05-09-khamzat-chimaev-sean-strickland",
@@ -129,7 +129,7 @@
       "away": "Marco Tulio",
       "pickedTeam": "Marco Tulio",
       "pickedSide": "away",
-      "modelProb": 0.6642407563923802,
+      "modelProb": 0.6642407563923801,
       "confidenceTier": "high_conviction",
       "extra": {
         "fightId": "9eedac48b497de5a-9",
@@ -153,7 +153,7 @@
       "away": "Djorden Santos",
       "pickedTeam": "Baisangur Susurkaev",
       "pickedSide": "home",
-      "modelProb": 0.7044131124535769,
+      "modelProb": 0.704413112453577,
       "confidenceTier": "high_conviction",
       "extra": {
         "fightId": "9eedac48b497de5a-11",
