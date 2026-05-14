@@ -1,7 +1,7 @@
 {
   "sport": "UFC",
   "date": "2026-05-16",
-  "generatedAt": "2026-05-11T15:03:40.467Z",
+  "generatedAt": "2026-05-14T14:58:33.188Z",
   "picks": [
     {
       "gameId": "ufc-2026-05-16-arnold-allen-melquizael-costa",
@@ -9,7 +9,7 @@
       "away": "Melquizael Costa",
       "pickedTeam": "Melquizael Costa",
       "pickedSide": "away",
-      "modelProb": 0.6009098727717568,
+      "modelProb": 0.6009098727717566,
       "confidenceTier": "strong",
       "extra": {
         "fightId": "73abb7a5c57fb443-0",
@@ -52,27 +52,27 @@
       }
     },
     {
-      "gameId": "ufc-2026-05-16-jeremiah-wells-nicolas-dalby",
-      "home": "Jeremiah Wells",
-      "away": "Nicolas Dalby",
-      "pickedTeam": "Jeremiah Wells",
+      "gameId": "ufc-2026-05-16-modestas-bukauskas-christian-edwards",
+      "home": "Modestas Bukauskas",
+      "away": "Christian Edwards",
+      "pickedTeam": "Modestas Bukauskas",
       "pickedSide": "home",
-      "modelProb": 0.5885446559028079,
-      "confidenceTier": "lean",
+      "modelProb": 0.6759925943922179,
+      "confidenceTier": "high_conviction",
       "extra": {
-        "fightId": "73abb7a5c57fb443-5",
+        "fightId": "73abb7a5c57fb443-3",
         "eventId": "73abb7a5c57fb443",
         "eventName": "UFC Fight Night: Allen vs. Costa",
         "eventDate": "2026-05-16",
         "weightClass": "Welterweight",
-        "cardPosition": "prelim",
+        "cardPosition": "main_card",
         "isMainEvent": false,
         "isTitleFight": false,
         "scheduledRounds": 3,
         "predictedMethod": "Decision",
-        "koProb": 0.11360836394532114,
-        "submissionProb": 0.04525246436898445,
-        "decisionProb": 0.8411391716856943
+        "koProb": 0.4241304258028312,
+        "submissionProb": 0.13838518822433002,
+        "decisionProb": 0.43748438597283873
       }
     },
     {
@@ -100,12 +100,12 @@
       }
     },
     {
-      "gameId": "ufc-2026-05-16-trey-ogden-tommy-gantt",
-      "home": "Trey Ogden",
-      "away": "Tommy Gantt",
+      "gameId": "ufc-2026-05-16-tommy-gantt-artur-minev",
+      "home": "Tommy Gantt",
+      "away": "Artur Minev",
       "pickedTeam": "Tommy Gantt",
-      "pickedSide": "away",
-      "modelProb": 0.8318751232769159,
+      "pickedSide": "home",
+      "modelProb": 0.8959458217261883,
       "confidenceTier": "lock",
       "extra": {
         "fightId": "73abb7a5c57fb443-7",
@@ -118,9 +118,9 @@
         "isTitleFight": false,
         "scheduledRounds": 3,
         "predictedMethod": "Decision",
-        "koProb": 0.4092712127257615,
-        "submissionProb": 0.12881510067714927,
-        "decisionProb": 0.46191368659708915
+        "koProb": 0.20305605191952958,
+        "submissionProb": 0.07821661232066247,
+        "decisionProb": 0.718727335759808
       }
     },
     {
@@ -191,7 +191,7 @@
         "scheduledRounds": 3,
         "predictedMethod": "KO/TKO",
         "koProb": 0.566561445389776,
-        "submissionProb": 0.16634859219653908,
+        "submissionProb": 0.1663485921965391,
         "decisionProb": 0.26708996241368493
       }
     },
