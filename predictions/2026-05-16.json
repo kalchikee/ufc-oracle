@@ -1,7 +1,7 @@
 {
   "sport": "UFC",
   "date": "2026-05-16",
-  "generatedAt": "2026-05-16T18:25:12.737Z",
+  "generatedAt": "2026-05-16T22:21:49.481Z",
   "picks": [
     {
       "gameId": "ufc-2026-05-16-arnold-allen-melquizael-costa",
@@ -177,7 +177,7 @@
       "away": "Polyana Viana",
       "pickedTeam": "Alice Ardelean",
       "pickedSide": "home",
-      "modelProb": 0.604919167506831,
+      "modelProb": 0.6108354922896269,
       "confidenceTier": "strong",
       "extra": {
         "fightId": "73abb7a5c57fb443-10",
@@ -196,12 +196,12 @@
       }
     },
     {
-      "gameId": "ufc-2026-05-16-shauna-bannon-nicolle-caliari",
-      "home": "Shauna Bannon",
-      "away": "Nicolle Caliari",
+      "gameId": "ufc-2026-05-16-nicolle-caliari-shauna-bannon",
+      "home": "Nicolle Caliari",
+      "away": "Shauna Bannon",
       "pickedTeam": "Shauna Bannon",
-      "pickedSide": "home",
-      "modelProb": 0.6028226986866481,
+      "pickedSide": "away",
+      "modelProb": 0.6013852512298187,
       "confidenceTier": "strong",
       "extra": {
         "fightId": "73abb7a5c57fb443-12",
@@ -214,9 +214,9 @@
         "isTitleFight": false,
         "scheduledRounds": 3,
         "predictedMethod": "Decision",
-        "koProb": 0.25623616813674854,
-        "submissionProb": 0.09074919031830542,
-        "decisionProb": 0.653014641544946
+        "koProb": 0.1500339315416215,
+        "submissionProb": 0.057332146009372004,
+        "decisionProb": 0.7926339224490065
       }
     }
   ]
