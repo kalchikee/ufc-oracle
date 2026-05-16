@@ -1,7 +1,7 @@
 {
   "sport": "UFC",
   "date": "2026-05-16",
-  "generatedAt": "2026-05-14T14:58:33.188Z",
+  "generatedAt": "2026-05-16T18:25:12.737Z",
   "picks": [
     {
       "gameId": "ufc-2026-05-16-arnold-allen-melquizael-costa",
@@ -57,8 +57,8 @@
       "away": "Christian Edwards",
       "pickedTeam": "Modestas Bukauskas",
       "pickedSide": "home",
-      "modelProb": 0.6759925943922179,
-      "confidenceTier": "high_conviction",
+      "modelProb": 0.6330713571010954,
+      "confidenceTier": "strong",
       "extra": {
         "fightId": "73abb7a5c57fb443-3",
         "eventId": "73abb7a5c57fb443",
@@ -105,7 +105,7 @@
       "away": "Artur Minev",
       "pickedTeam": "Tommy Gantt",
       "pickedSide": "home",
-      "modelProb": 0.8959458217261883,
+      "modelProb": 0.8904717752711517,
       "confidenceTier": "lock",
       "extra": {
         "fightId": "73abb7a5c57fb443-7",
