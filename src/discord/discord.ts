@@ -133,6 +133,16 @@ export async function sendFightCardPredictions(
 
   const fields: DiscordField[] = [];
 
+  // Season hit-rate — same source the post-event recap uses, so card-day +
+  // recap agree on the number. Only shown when the season has graded picks.
+  if (stats.ytdTotal > 0) {
+    fields.push({
+      name: '📊 Season Accuracy',
+      value: `**${pct(stats.ytdAccuracy)}** · ${stats.ytdCorrect}/${stats.ytdTotal} predictions correct this season`,
+      inline: false,
+    });
+  }
+
   // Main event — detailed breakdown
   if (mainEvent) {
     const winProb = mainEvent.predictedWinnerId === mainEvent.fighterAId
