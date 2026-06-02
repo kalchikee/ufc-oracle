@@ -1,16 +1,27 @@
 // UFC Oracle v4.1 — Fight Card Fetcher
-// Fetches the upcoming UFC event card from UFCStats.com and UFC.com
-// Returns structured fight card data for prediction pipeline.
+// Fetches the upcoming UFC event card from UFCStats.com (primary) with an
+// ESPN MMA fallback. UFCStats added a JavaScript-based anti-bot challenge
+// in mid-May 2026 — every request now returns a "Checking your browser…"
+// page with zero data rows, so the cheerio scrape silently parses 0
+// events and the entire UFC pipeline went dark. The ESPN MMA scoreboard
+// endpoint exposes the same upcoming event + bout list without a
+// challenge, so we use it as the discovery + card source and map fighter
+// names against the existing UFCStats-keyed fighters table.
 
 import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
 import { logger } from '../logger.js';
+import { getFighterByName } from '../db/database.js';
 import type { FightCard, FightCardBout, WeightClass } from '../types.js';
 
 const UFCSTATS_EVENTS_URL = 'http://www.ufcstats.com/statistics/events/upcoming';
 const UFCSTATS_COMPLETED_URL = 'http://www.ufcstats.com/statistics/events/completed';
 const BASE_URL = 'http://www.ufcstats.com';
+const ESPN_MMA_BASE = 'https://site.api.espn.com/apis/site/v2/sports/mma/ufc';
 const DELAY_MS = 1200;
+// Sentinel embedded in the eventUrl so fetchFightCard can route to the
+// ESPN handler without ambiguity.
+const ESPN_URL_PREFIX = 'espn-mma://';
 
 async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -64,14 +75,50 @@ export async function getNextUFCEvent(): Promise<{ eventId: string; eventUrl: st
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const futureOrToday = candidates.filter(c => new Date(c.eventDate) >= now);
-  if (futureOrToday.length === 0) {
-    logger.info('No upcoming or same-day UFC events found on UFCStats');
+  if (futureOrToday.length > 0) {
+    futureOrToday.sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
+    const next = futureOrToday[0];
+    logger.info({ eventName: next.eventName, eventDate: next.eventDate, eventUrl: next.eventUrl }, 'Next UFC event found (UFCStats)');
+    return { eventId: next.eventId, eventUrl: next.eventUrl, eventDate: next.eventDate };
+  }
+
+  // UFCStats returned nothing — either off-week or (since mid-May 2026) the
+  // JS challenge blocked the scrape. Fall back to ESPN's MMA scoreboard.
+  logger.info('UFCStats produced no events — falling back to ESPN MMA');
+  const espn = await getNextUFCEventFromESPN();
+  if (!espn) {
+    logger.info('No upcoming or same-day UFC events found on UFCStats or ESPN');
     return null;
   }
-  futureOrToday.sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
-  const next = futureOrToday[0];
-  logger.info({ eventName: next.eventName, eventDate: next.eventDate, eventUrl: next.eventUrl }, 'Next UFC event found');
-  return { eventId: next.eventId, eventUrl: next.eventUrl, eventDate: next.eventDate };
+  return espn;
+}
+
+async function getNextUFCEventFromESPN(): Promise<{ eventId: string; eventUrl: string; eventDate: string } | null> {
+  try {
+    const resp = await fetch(`${ESPN_MMA_BASE}/scoreboard`, {
+      headers: { 'User-Agent': 'UFC-Oracle-Research-Bot/4.1' },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!resp.ok) {
+      logger.warn({ status: resp.status }, 'ESPN MMA scoreboard returned non-200');
+      return null;
+    }
+    const data = await resp.json() as { events?: Array<{ id: string; name: string; date: string }> };
+    const events = data.events ?? [];
+    if (events.length === 0) return null;
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    const future = events
+      .map(e => ({ id: e.id, name: e.name, date: e.date.slice(0, 10) }))
+      .filter(e => new Date(e.date) >= now)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    if (future.length === 0) return null;
+    const next = future[0];
+    logger.info({ eventName: next.name, eventDate: next.date, espnId: next.id }, 'Next UFC event found (ESPN)');
+    return { eventId: next.id, eventUrl: `${ESPN_URL_PREFIX}${next.id}`, eventDate: next.date };
+  } catch (err) {
+    logger.warn({ err }, 'ESPN MMA scoreboard fetch failed');
+    return null;
+  }
 }
 
 export function isFightWeek(eventDate: string): boolean {
@@ -98,6 +145,9 @@ export function isFightDay(eventDate: string): boolean {
 // ─── Fight card scraping ──────────────────────────────────────────────────────
 
 export async function fetchFightCard(eventUrl: string): Promise<FightCard | null> {
+  if (eventUrl.startsWith(ESPN_URL_PREFIX)) {
+    return fetchFightCardFromESPN(eventUrl.slice(ESPN_URL_PREFIX.length));
+  }
   try {
     const $ = await fetchHtml(eventUrl);
 
@@ -181,6 +231,112 @@ export async function fetchFightCard(eventUrl: string): Promise<FightCard | null
   }
 }
 
+// ─── ESPN MMA event-card fetcher (fallback when UFCStats is blocked) ─────────
+
+async function fetchFightCardFromESPN(eventId: string): Promise<FightCard | null> {
+  try {
+    const resp = await fetch(`${ESPN_MMA_BASE}/scoreboard?dates=`, {
+      headers: { 'User-Agent': 'UFC-Oracle-Research-Bot/4.1' },
+      signal: AbortSignal.timeout(15000),
+    });
+    // Pull the event from the broader scoreboard so we get its competitions
+    // list. Could also hit the per-event endpoint but scoreboard is one call.
+    const detailResp = await fetch(`${ESPN_MMA_BASE}/scoreboard`, {
+      headers: { 'User-Agent': 'UFC-Oracle-Research-Bot/4.1' },
+      signal: AbortSignal.timeout(15000),
+    });
+    void resp;
+    if (!detailResp.ok) {
+      logger.error({ eventId, status: detailResp.status }, 'ESPN MMA fetch failed');
+      return null;
+    }
+    const data = await detailResp.json() as {
+      events?: Array<{
+        id: string; name: string; date: string;
+        competitions?: Array<{
+          id: string;
+          competitors?: Array<{
+            athlete?: { id?: string; displayName?: string; weightClass?: { text?: string } };
+            winner?: boolean;
+          }>;
+          venue?: { fullName?: string; address?: { city?: string; state?: string; country?: string } };
+        }>;
+      }>;
+    };
+    const event = (data.events ?? []).find(e => e.id === eventId);
+    if (!event) {
+      logger.warn({ eventId }, 'Event not found in ESPN scoreboard');
+      return null;
+    }
+
+    const comps = event.competitions ?? [];
+    const venueObj = comps[0]?.venue;
+    const venue = venueObj?.fullName ?? '';
+    const addr = venueObj?.address;
+    const location = [addr?.city, addr?.state, addr?.country].filter(Boolean).join(', ');
+
+    // ESPN orders competitions chronologically (early prelims start first,
+    // main event last). Reverse so the main event comes first — matches the
+    // UFCStats path's ordering and predictionRunner's expectations. Look up
+    // fighter_id by name from the existing fighters table; unknown fighters
+    // keep undefined IDs and the prediction pipeline handles that case.
+    const ordered = [...comps].reverse();
+    const bouts: FightCardBout[] = [];
+    for (let i = 0; i < ordered.length; i++) {
+      const c = ordered[i];
+      const competitors = c.competitors ?? [];
+      const a = competitors[0];
+      const b = competitors[1];
+      if (!a?.athlete?.displayName || !b?.athlete?.displayName) continue;
+      const aName = a.athlete.displayName;
+      const bName = b.athlete.displayName;
+      // DB may not be initialized in tests / dry-runs — fall back to
+      // undefined fighter IDs (predictionRunner handles unknown fighters).
+      let aRow, bRow;
+      try { aRow = getFighterByName(aName); } catch { aRow = undefined; }
+      try { bRow = getFighterByName(bName); } catch { bRow = undefined; }
+      const weightText = a.athlete.weightClass?.text ?? '';
+      const weightClass = parseWeightClass(weightText);
+      const isMainEvent = i === 0;
+      const isTitleFight = (event.name ?? '').toLowerCase().includes('title') ||
+                           weightText.toLowerCase().includes('title');
+      const cardPosition = inferCardPosition(i, ordered.length);
+      bouts.push({
+        fightId: `${eventId}-${i}`,
+        fighterA: aName,
+        fighterB: bName,
+        fighterAId: aRow?.fighterId,
+        fighterBId: bRow?.fighterId,
+        weightClass,
+        isMainEvent,
+        isTitleFight,
+        scheduledRounds: isTitleFight || isMainEvent ? 5 : 3,
+        cardPosition,
+      });
+    }
+    if (bouts.length === 0) {
+      logger.warn({ eventId }, 'ESPN event had zero parseable bouts');
+      return null;
+    }
+    const matched = bouts.filter(b => b.fighterAId && b.fighterBId).length;
+    logger.info(
+      { eventId, eventName: event.name, bouts: bouts.length, fighterIdsMatched: matched },
+      'Fight card built from ESPN',
+    );
+    return {
+      eventId,
+      eventName: event.name,
+      eventDate: event.date.slice(0, 10),
+      location,
+      venue,
+      fights: bouts,
+    };
+  } catch (err) {
+    logger.error({ err, eventId }, 'Failed to fetch fight card from ESPN');
+    return null;
+  }
+}
+
 // ─── Post-event results ───────────────────────────────────────────────────────
 
 export interface FightResult {
@@ -196,6 +352,9 @@ export interface FightResult {
 }
 
 export async function fetchEventResults(eventUrl: string): Promise<FightResult[]> {
+  if (eventUrl.startsWith(ESPN_URL_PREFIX)) {
+    return fetchEventResultsFromESPN(eventUrl.slice(ESPN_URL_PREFIX.length));
+  }
   try {
     const $ = await fetchHtml(eventUrl);
     const eventId = eventUrl.split('/event-details/')[1] ?? eventUrl;
@@ -239,6 +398,77 @@ export async function fetchEventResults(eventUrl: string): Promise<FightResult[]
     return results;
   } catch (err) {
     logger.error({ err, eventUrl }, 'Failed to fetch event results');
+    return [];
+  }
+}
+
+async function fetchEventResultsFromESPN(eventId: string): Promise<FightResult[]> {
+  try {
+    const resp = await fetch(`${ESPN_MMA_BASE}/scoreboard`, {
+      headers: { 'User-Agent': 'UFC-Oracle-Research-Bot/4.1' },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!resp.ok) {
+      logger.error({ eventId, status: resp.status }, 'ESPN MMA scoreboard fetch failed for results');
+      return [];
+    }
+    const data = await resp.json() as {
+      events?: Array<{
+        id: string;
+        competitions?: Array<{
+          id: string;
+          status?: { type?: { completed?: boolean } };
+          competitors?: Array<{
+            athlete?: { id?: string; displayName?: string };
+            winner?: boolean;
+          }>;
+          notes?: Array<{ headline?: string }>;
+        }>;
+      }>;
+    };
+    const event = (data.events ?? []).find(e => e.id === eventId);
+    if (!event) return [];
+    const comps = event.competitions ?? [];
+    const results: FightResult[] = [];
+    let fightIndex = 0;
+    for (const c of comps) {
+      const completed = c.status?.type?.completed;
+      if (!completed) { fightIndex++; continue; }
+      const competitors = c.competitors ?? [];
+      const winnerComp = competitors.find(x => x.winner) ?? competitors[0];
+      const loserComp = competitors.find(x => x !== winnerComp);
+      if (!winnerComp?.athlete?.displayName || !loserComp?.athlete?.displayName) {
+        fightIndex++;
+        continue;
+      }
+      const winnerName = winnerComp.athlete.displayName;
+      const loserName = loserComp.athlete.displayName;
+      let winnerRow, loserRow;
+      try { winnerRow = getFighterByName(winnerName); } catch { winnerRow = undefined; }
+      try { loserRow = getFighterByName(loserName); } catch { loserRow = undefined; }
+      // ESPN doesn't expose round/method/time in the scoreboard payload —
+      // recap can backfill these later if needed. winnerId / loserId from
+      // the local DB are what the rest of the pipeline keys on.
+      results.push({
+        fightId: `${eventId}-${fightIndex}`,
+        fighterAId: winnerRow?.fighterId ?? winnerName,
+        fighterBId: loserRow?.fighterId ?? loserName,
+        winnerId: winnerRow?.fighterId ?? winnerName,
+        winnerName,
+        loserName,
+        method: 'Decision',  // placeholder; refine via event-detail endpoint later
+        round: 3,
+        time: '5:00',
+      });
+      fightIndex++;
+    }
+    logger.info(
+      { eventId, completed: results.length, total: comps.length },
+      'Event results pulled from ESPN',
+    );
+    return results;
+  } catch (err) {
+    logger.error({ err, eventId }, 'Failed to fetch event results from ESPN');
     return [];
   }
 }
