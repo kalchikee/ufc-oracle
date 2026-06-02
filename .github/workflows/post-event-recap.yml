@@ -58,6 +58,25 @@ jobs:
           LOG_LEVEL: info
           LOG_FORMAT: json
 
+      # JSON-based grading: walks predictions/*.json, fetches ESPN winners,
+      # appends to data/grading_history.json. The morning Discord embed
+      # reads from this file so YTD accuracy populates even when the DB
+      # recap path failed.
+      - name: Grade predictions from ESPN (writes grading_history.json)
+        run: python python/recap.py
+
+      - name: Commit grading_history.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/grading_history.json || true
+          if ! git diff --staged --quiet; then
+            git commit -m "UFC recap: grade ungraded predictions"
+            git push
+          else
+            echo "No new gradings to commit"
+          fi
+
       # Save DB after Elo updates
       - name: Save updated database
         if: always()

@@ -225,12 +225,47 @@ export function getFighter(fighterId: string): Fighter | undefined {
   return rowToFighter(row);
 }
 
+/** lower-case + strip combining marks so "Édgar Cháirez" matches the DB's
+ *  stored "Edgar Chairez". Used by both the SQL lookup below and the
+ *  in-memory fallback that handles accent-only mismatches. */
+function normalizeFighterName(s: string): string {
+  return s.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().trim();
+}
+
+let _normalizedNameIndex: Map<string, string> | null = null;
+
+function buildNameIndex(): Map<string, string> {
+  if (_normalizedNameIndex) return _normalizedNameIndex;
+  const m = new Map<string, string>();
+  for (const row of queryAll<{ fighter_id: string; name: string }>(
+    "SELECT fighter_id, name FROM fighters",
+  )) {
+    m.set(normalizeFighterName(row.name), row.fighter_id);
+  }
+  _normalizedNameIndex = m;
+  return m;
+}
+
+/** Invalidate the cached name index. Call after bulk inserts (e.g. the
+ *  Python fighter updater) so subsequent lookups see the new rows. */
+export function invalidateFighterNameIndex(): void {
+  _normalizedNameIndex = null;
+}
+
 export function getFighterByName(name: string): Fighter | undefined {
+  // Direct-LOWER match handles the common case cheaply. Fall back to the
+  // accent-normalized index when the LOWER comparison fails — UFCStats
+  // stored ASCII-only names for years and ESPN supplies accented Unicode
+  // for the same fighters, so we'd otherwise miss debutants like
+  // "Édgar Cháirez" who are in the DB as "Edgar Chairez".
   const row = queryOne<Record<string, unknown>>(
     "SELECT * FROM fighters WHERE LOWER(name) = LOWER(?)", [name]
   );
-  if (!row) return undefined;
-  return rowToFighter(row);
+  if (row) return rowToFighter(row);
+  const idx = buildNameIndex();
+  const id = idx.get(normalizeFighterName(name));
+  if (!id) return undefined;
+  return getFighter(id);
 }
 
 export function getAllFighters(): Fighter[] {
@@ -406,6 +441,15 @@ function rowToPrediction(row: Record<string, unknown>): Prediction {
 
 export function getYTDAccuracy(): AccuracyStats {
   const year = new Date().getFullYear();
+
+  // Primary: read from data/grading_history.json (populated by
+  // python/recap.py). The DB-backed path below was unreliable because
+  // the recap-grade step depended on UFCStats scraping which has been
+  // intermittently blocked; the JSON file is the source of truth
+  // committed alongside the predictions/<date>.json files.
+  const fromHistory = readAccuracyFromHistory(year);
+  if (fromHistory) return fromHistory;
+
   const rows = queryAll<Record<string, unknown>>(
     `SELECT * FROM predictions WHERE correct IS NOT NULL AND event_date LIKE '${year}%'`
   ).map(rowToPrediction);
@@ -455,6 +499,89 @@ export function getYTDAccuracy(): AccuracyStats {
       accuracy: r.accuracy as number,
     })),
   };
+}
+
+interface GradedPick {
+  date: string;
+  eventName?: string;
+  gameId: string;
+  modelProb?: number;
+  correct?: boolean;
+  isMainEvent?: boolean;
+  confidenceTier?: string;
+}
+
+function readAccuracyFromHistory(year: number): AccuracyStats | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { readFileSync, existsSync } = require('fs');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const path = require('path');
+    const file = path.resolve(process.cwd(), 'data/grading_history.json');
+    if (!existsSync(file)) return null;
+    const parsed = JSON.parse(readFileSync(file, 'utf-8')) as { graded?: GradedPick[] };
+    const graded = (parsed.graded ?? []).filter(g => g.date?.startsWith(String(year)));
+    if (graded.length === 0) return null;
+
+    const ytdTotal = graded.length;
+    const ytdCorrect = graded.filter(g => g.correct).length;
+    const hc = graded.filter(g =>
+      g.confidenceTier === 'high_conviction' || g.confidenceTier === 'lock',
+    );
+    const hcCorrect = hc.filter(g => g.correct).length;
+    const mainEvent = graded.filter(g => g.isMainEvent);
+    const mainEventCorrect = mainEvent.filter(g => g.correct).length;
+    const brier = graded.reduce((s, g) => {
+      const p = g.modelProb ?? 0.5;
+      const outcome = g.correct ? 1 : 0;
+      // Picked-side framing: modelProb is the prob the model gave to the
+      // pickedFighter; if correct, outcome=1, else 0. Brier on the picked
+      // side is a fair calibration metric.
+      return s + Math.pow(p - outcome, 2);
+    }, 0) / ytdTotal;
+
+    // Event-by-event log derived from the same data.
+    const byEvent = new Map<string, { name: string; date: string; correct: number; total: number }>();
+    for (const g of graded) {
+      const key = `${g.date}|${g.eventName ?? ''}`;
+      const cur = byEvent.get(key) ?? { name: g.eventName ?? '', date: g.date, correct: 0, total: 0 };
+      cur.total += 1;
+      if (g.correct) cur.correct += 1;
+      byEvent.set(key, cur);
+    }
+    const eventRecord = Array.from(byEvent.entries())
+      .map(([key, v]) => ({
+        eventId: key,
+        eventName: v.name,
+        eventDate: v.date,
+        correct: v.correct,
+        total: v.total,
+        accuracy: v.total > 0 ? v.correct / v.total : 0,
+      }))
+      .sort((a, b) => b.eventDate.localeCompare(a.eventDate))
+      .slice(0, 20);
+
+    return {
+      ytdCorrect,
+      ytdTotal,
+      ytdAccuracy: ytdTotal > 0 ? ytdCorrect / ytdTotal : 0,
+      highConvCorrect: hcCorrect,
+      highConvTotal: hc.length,
+      highConvAccuracy: hc.length > 0 ? hcCorrect / hc.length : 0,
+      methodCorrect: 0,   // method grading would need the per-bout result endpoint
+      methodTotal: 0,
+      methodAccuracy: 0,
+      valueBetROI: 0,
+      underdogCorrect: 0, // vegas comparison not tracked in JSON yet
+      underdogTotal: 0,
+      mainEventCorrect,
+      mainEventTotal: mainEvent.length,
+      brierScore: brier,
+      eventRecord,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export function logEventAccuracy(

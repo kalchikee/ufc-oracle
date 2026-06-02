@@ -55,6 +55,14 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r python/requirements.txt
 
+      # Backfill any debutant fighters from upcoming events into the
+      # fighters table before prediction. UFCStats.com is JS-challenged
+      # so the monthly fighter-db-update.yml scrape silently no-ops;
+      # this ESPN-driven shim keeps the table current with the next
+      # week's card so name-matching in fetchFightCardFromESPN resolves.
+      - name: Add debutant fighters from ESPN
+        run: python python/update_fighters_espn.py --days 14
+
       - name: Generate and save predictions (no Discord)
         run: npm run pipeline:save
         env:
