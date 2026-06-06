@@ -1,0 +1,55 @@
+{
+  "sport": "UFC",
+  "date": "2026-06-06",
+  "generatedAt": "2026-06-06T18:33:20.573Z",
+  "picks": [
+    {
+      "gameId": "ufc-2026-06-06-priscila-cachoeira-chelsea-chandler",
+      "home": "Priscila Cachoeira",
+      "away": "Chelsea Chandler",
+      "pickedTeam": "Chelsea Chandler",
+      "pickedSide": "away",
+      "modelProb": 0.5820544432645443,
+      "confidenceTier": "lean",
+      "extra": {
+        "fightId": "600058949-8",
+        "eventId": "600058949",
+        "eventName": "UFC Fight Night: Muhammad vs. Bonfim",
+        "eventDate": "2026-06-06",
+        "weightClass": "Welterweight",
+        "cardPosition": "prelim",
+        "isMainEvent": false,
+        "isTitleFight": false,
+        "scheduledRounds": 3,
+        "predictedMethod": "Decision",
+        "koProb": 0.26246268383004057,
+        "submissionProb": 0.09230597879503732,
+        "decisionProb": 0.6452313373749221
+      }
+    },
+    {
+      "gameId": "ufc-2026-06-06-yuneisy-duben-jeisla-chaves",
+      "home": "Yuneisy Duben",
+      "away": "Jeisla Chaves",
+      "pickedTeam": "Jeisla Chaves",
+      "pickedSide": "away",
+      "modelProb": 0.5975988918300752,
+      "confidenceTier": "lean",
+      "extra": {
+        "fightId": "600058949-10",
+        "eventId": "600058949",
+        "eventName": "UFC Fight Night: Muhammad vs. Bonfim",
+        "eventDate": "2026-06-06",
+        "weightClass": "Welterweight",
+        "cardPosition": "early_prelim",
+        "isMainEvent": false,
+        "isTitleFight": false,
+        "scheduledRounds": 3,
+        "predictedMethod": "KO/TKO",
+        "koProb": 0.7391355216230983,
+        "submissionProb": 0.18299910997069474,
+        "decisionProb": 0.07786536840620713
+      }
+    }
+  ]
+}
