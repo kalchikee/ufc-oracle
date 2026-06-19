@@ -584,6 +584,65 @@ function readAccuracyFromHistory(year: number): AccuracyStats | null {
   }
 }
 
+export interface ConfidenceBucket {
+  label: string;     // e.g. "70-80%"
+  total: number;
+  correct: number;
+  accuracy: number;  // 0..1
+}
+
+// Confidence-bucket calibration for the morning Discord embed. We bin on
+// PICK-SIDE probability — but in UFC the `modelProb` stored in
+// `data/grading_history.json` is ALREADY the picked-side probability
+// (the recap script writes pick.modelProb directly, which is the prob the
+// model gave to the predicted winner). So unlike the NBA path we do NOT
+// take max(p, 1-p) here — that would double-fold and skew the buckets.
+// Buckets are half-open [lo, hi). Only buckets with at least one graded
+// pick are returned so the embed stays compact early-season.
+export function getConfidenceBuckets(year?: number): ConfidenceBucket[] {
+  const yr = year ?? new Date().getFullYear();
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { readFileSync, existsSync } = require('fs');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const path = require('path');
+    const file = path.resolve(process.cwd(), 'data/grading_history.json');
+    if (!existsSync(file)) return [];
+    const parsed = JSON.parse(readFileSync(file, 'utf-8')) as { graded?: GradedPick[] };
+    const graded = (parsed.graded ?? []).filter(g => g.date?.startsWith(String(yr)));
+    if (graded.length === 0) return [];
+
+    const buckets: Array<{ lo: number; hi: number; label: string; total: number; correct: number }> = [
+      { lo: 0.50, hi: 0.60, label: '50-60%', total: 0, correct: 0 },
+      { lo: 0.60, hi: 0.70, label: '60-70%', total: 0, correct: 0 },
+      { lo: 0.70, hi: 0.80, label: '70-80%', total: 0, correct: 0 },
+      { lo: 0.80, hi: 0.90, label: '80-90%', total: 0, correct: 0 },
+      { lo: 0.90, hi: 1.01, label: '90%+',   total: 0, correct: 0 },
+    ];
+    for (const g of graded) {
+      const p = g.modelProb;
+      if (typeof p !== 'number') continue;
+      for (const b of buckets) {
+        if (p >= b.lo && p < b.hi) {
+          b.total += 1;
+          if (g.correct) b.correct += 1;
+          break;
+        }
+      }
+    }
+    return buckets
+      .filter(b => b.total > 0)
+      .map(b => ({
+        label: b.label,
+        total: b.total,
+        correct: b.correct,
+        accuracy: b.correct / b.total,
+      }));
+  } catch {
+    return [];
+  }
+}
+
 export function logEventAccuracy(
   eventId: string, eventName: string, eventDate: string,
   correct: number, total: number, hcCorrect: number, hcTotal: number,

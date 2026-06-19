@@ -221,6 +221,47 @@ def grade_all_ungraded(history: dict) -> int:
     return total
 
 
+# Confidence buckets shown in the Discord embed so the user can see how
+# the model's declared probability tracks reality at each tier. Each
+# bucket is half-open [lo, hi). For UFC the recap writes pick.modelProb
+# directly into grading_history.json — that value is ALREADY the
+# picked-side probability (the prob the model gave to the predicted
+# winner), so the lowest possible value is ~0.5 and we do NOT take
+# max(p, 1-p).
+CONFIDENCE_BUCKETS = [
+    (0.50, 0.60, "50-60%"),
+    (0.60, 0.70, "60-70%"),
+    (0.70, 0.80, "70-80%"),
+    (0.80, 0.90, "80-90%"),
+    (0.90, 1.01, "90%+"),
+]
+
+
+def compute_confidence_buckets(history: dict, year: int | None = None) -> list[dict]:
+    """For each confidence bucket return {label, total, correct, accuracy}.
+
+    Only buckets with at least one graded pick are returned, so the
+    embed doesn't carry empty rows when the season is young."""
+    graded = history.get("graded", [])
+    if year is not None:
+        graded = [g for g in graded if g.get("date", "").startswith(str(year))]
+    out = []
+    for lo, hi, label in CONFIDENCE_BUCKETS:
+        rows = [g for g in graded
+                if g.get("modelProb") is not None
+                and lo <= float(g["modelProb"]) < hi]
+        if not rows:
+            continue
+        correct = sum(1 for r in rows if r.get("correct"))
+        out.append({
+            "label":    label,
+            "total":    len(rows),
+            "correct":  correct,
+            "accuracy": correct / len(rows),
+        })
+    return out
+
+
 def compute_season_stats(history: dict, year: int | None = None) -> dict:
     """Year-to-date if year is given, else lifetime. Matches the
     AccuracyStats shape that getYTDAccuracy returns in TypeScript."""
@@ -271,6 +312,13 @@ def main() -> int:
           f"({stats['hcAccuracy']*100:.1f}%)")
     print(f"[recap] {year} main events: {stats['mainEventCorrect']}"
           f"/{stats['mainEventTotal']} ({stats['mainEventAccuracy']*100:.1f}%)")
+
+    buckets = compute_confidence_buckets(history, year)
+    if buckets:
+        print(f"[recap] {year} calibration by confidence:")
+        for b in buckets:
+            print(f"  {b['label']}: {b['correct']}/{b['total']} "
+                  f"({b['accuracy']*100:.1f}%)")
     return 0
 
 
