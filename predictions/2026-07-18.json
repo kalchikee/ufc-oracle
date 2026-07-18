@@ -1,0 +1,31 @@
+{
+  "sport": "UFC",
+  "date": "2026-07-18",
+  "generatedAt": "2026-07-18T18:22:27.746Z",
+  "picks": [
+    {
+      "gameId": "ufc-2026-07-18-jared-cannonier-christian-leroy-duncan",
+      "home": "Jared Cannonier",
+      "away": "Christian Leroy Duncan",
+      "pickedTeam": "Christian Leroy Duncan",
+      "pickedSide": "away",
+      "modelProb": 0.6791389520863985,
+      "confidenceTier": "high_conviction",
+      "extra": {
+        "fightId": "600059599-1",
+        "eventId": "600059599",
+        "eventName": "UFC Fight Night: Du Plessis vs. Usman",
+        "eventDate": "2026-07-18",
+        "weightClass": "Welterweight",
+        "cardPosition": "co_main",
+        "isMainEvent": false,
+        "isTitleFight": false,
+        "scheduledRounds": 3,
+        "predictedMethod": "Decision",
+        "koProb": 0.20322535078220136,
+        "submissionProb": 0.07420380771045368,
+        "decisionProb": 0.722570841507345
+      }
+    }
+  ]
+}
