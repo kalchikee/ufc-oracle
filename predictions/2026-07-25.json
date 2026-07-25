@@ -1,7 +1,7 @@
 {
   "sport": "UFC",
   "date": "2026-07-25",
-  "generatedAt": "2026-07-25T18:22:30.881Z",
+  "generatedAt": "2026-07-25T22:21:39.767Z",
   "picks": [
     {
       "gameId": "ufc-2026-07-25-mike-davis-nurullo-aliev",
@@ -9,7 +9,7 @@
       "away": "Nurullo Aliev",
       "pickedTeam": "Nurullo Aliev",
       "pickedSide": "away",
-      "modelProb": 0.729074571621109,
+      "modelProb": 0.7290727753792589,
       "confidenceTier": "lock",
       "extra": {
         "fightId": "600059667-10",
