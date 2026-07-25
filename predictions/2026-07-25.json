@@ -1,0 +1,31 @@
+{
+  "sport": "UFC",
+  "date": "2026-07-25",
+  "generatedAt": "2026-07-25T18:22:30.881Z",
+  "picks": [
+    {
+      "gameId": "ufc-2026-07-25-mike-davis-nurullo-aliev",
+      "home": "Mike Davis",
+      "away": "Nurullo Aliev",
+      "pickedTeam": "Nurullo Aliev",
+      "pickedSide": "away",
+      "modelProb": 0.729074571621109,
+      "confidenceTier": "lock",
+      "extra": {
+        "fightId": "600059667-10",
+        "eventId": "600059667",
+        "eventName": "UFC Fight Night: Ankalaev vs. Guskov",
+        "eventDate": "2026-07-25",
+        "weightClass": "Welterweight",
+        "cardPosition": "early_prelim",
+        "isMainEvent": false,
+        "isTitleFight": false,
+        "scheduledRounds": 3,
+        "predictedMethod": "Decision",
+        "koProb": 0.08590886714582252,
+        "submissionProb": 0.03464963009258233,
+        "decisionProb": 0.879441502761595
+      }
+    }
+  ]
+}
